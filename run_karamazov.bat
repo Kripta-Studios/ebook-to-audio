@@ -1,6 +1,6 @@
 @echo off
-echo Activando entorno virtual uv...
+echo Activating virtual environment in uv...
 call .venv\Scripts\activate
-echo Lanzando audiolibro: Los Hermanos Karamazov
+echo Starting audiobook in Spanish: Los Hermanos Karamazov
 python audiobook.py ".\Karamazov.epub" -o ".\Karamazov_Audio\Karamazov.mp3" -l es -c -v em_alex --whisper-modelo small
 pause
