@@ -20,11 +20,41 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 git clone [https://github.com/YOUR_USERNAME/ebook-to-audio.git](https://github.com/YOUR_USERNAME/ebook-to-audio.git)
 cd ebook-to-audio
 
-# Create environment and install dependencies
+### Create environment and install dependencies
 uv venv --python 3.12
 source .venv/Scripts/activate
 uv pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu128](https://download.pytorch.org/whl/cu128)
 uv pip install -r requirements.txt
 
-# Usage
+### Usage
 python audiobook.py "path/to/book.epub" -o "output/book.mp3" -l es -c -v em_alex
+
+Para que tu repositorio sea útil a otros (o para ti mismo en el futuro), el README debe explicar cómo obtener los modelos pesados que no subiremos a GitHub.
+
+Aquí tienes la sección de **"Model Download"** y configuración técnica que puedes copiar y pegar en tu archivo `README.md`:
+
+-----
+
+### Model Setup (Required)
+
+Since the model files are large, they are not included in this repository. Please download them and place them in the root directory:
+
+1.  **Kokoro v1.0**:
+      * Download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from the [Kokoro ONNX Hugging Face repository](https://www.google.com/search?q=https://huggingface.co/hexgrad/Kokoro-82M/tree/main/onnx).
+2.  **Whisper**:
+      * No manual download is required for Whisper. The script will automatically download the specified model (e.g., `small`) the first time you run it.
+
+-----
+
+### Troubleshooting: Blackwell GPU & Windows DLLs
+
+If you are using an **RTX 50-series (Blackwell)** card on Windows, you might encounter `OSError` or `WinError 126/127`. This is due to version conflicts between the system's CUDA and PyTorch's internal libraries.
+
+The script includes a manual linkage for these specific paths:
+
+  * `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin`
+  * `C:\Program Files\NVIDIA\CUDNN\v9.20\bin\12.9\x64`
+
+**If your installation paths differ, update the `rutas_gpu` list in `audiobook.py`.**
+
+-----
