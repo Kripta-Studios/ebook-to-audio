@@ -1,0 +1,20 @@
+# Entorno virtual (nunca se sube)
+.venv/
+
+# Modelos de IA (son muy pesados, el usuario debe bajarlos aparte)
+kokoro-v1.0.onnx
+voices-v1.0.bin
+piper_models/
+/root/.cache/whisper/
+
+# Archivos de libros (Copyright y espacio)
+*.epub
+*.pdf
+
+# Carpetas de resultados
+Gala/
+Karamazov_Audio/
+Karamazov_Resultados/
+
+# Scripts de servidor/clúster específicos
+audiobook_cesga.sh
