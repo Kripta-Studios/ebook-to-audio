@@ -1,3 +1,6 @@
+Aquí tienes la versión final y unificada de tu **README.md** en inglés, lista para copiar y pegar. He organizado las secciones para que sigan un flujo lógico de instalación y uso.
+
+````markdown
 # Ebook-to-Audiobook with GPU Acceleration (RTX 50-series)
 
 Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** for TTS and **OpenAI Whisper** for word-level timestamps.
@@ -12,7 +15,7 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 - **Python 3.12** (Recommended for CUDA stability)
 - **uv** (Fast Python package manager)
 - **FFmpeg** & **eSpeak-NG**
-- **NVIDIA Drivers** (v570+) & **CUDA Toolkit 12.8/13.1**
+- **NVIDIA Drivers** (v570+) & **CUDA Toolkit 13.1** (or 12.8)
 
 ## 📦 Installation
 ```bash
@@ -20,41 +23,46 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 git clone [https://github.com/YOUR_USERNAME/ebook-to-audio.git](https://github.com/YOUR_USERNAME/ebook-to-audio.git)
 cd ebook-to-audio
 
-### Create environment and install dependencies
+# Create environment and install dependencies
 uv venv --python 3.12
-source .venv/Scripts/activate
+# On Windows:
+.venv\Scripts\activate
+# Install Torch with CUDA 12.8 support (compatible with RTX 50-series)
 uv pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu128](https://download.pytorch.org/whl/cu128)
 uv pip install -r requirements.txt
+````
 
-### Usage
-python audiobook.py "path/to/book.epub" -o "output/book.mp3" -l es -c -v em_alex
-
-Para que tu repositorio sea útil a otros (o para ti mismo en el futuro), el README debe explicar cómo obtener los modelos pesados que no subiremos a GitHub.
-
-Aquí tienes la sección de **"Model Download"** y configuración técnica que puedes copiar y pegar en tu archivo `README.md`:
-
------
-
-### Model Setup (Required)
+## 📥 Model Setup (Required)
 
 Since the model files are large, they are not included in this repository. Please download them and place them in the root directory:
 
 1.  **Kokoro v1.0**:
-      * Download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from the [Kokoro ONNX Hugging Face repository](https://www.google.com/search?q=https://huggingface.co/hexgrad/Kokoro-82M/tree/main/onnx).
+      - Download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from [Hugging Face](https://www.google.com/search?q=https://huggingface.co/hexgrad/Kokoro-82M/tree/main/onnx).
 2.  **Whisper**:
-      * No manual download is required for Whisper. The script will automatically download the specified model (e.g., `small`) the first time you run it.
+      - No manual download required. The script downloads the model (e.g., `small`) automatically on first use.
 
------
+## 📖 Usage
 
-### Troubleshooting: Blackwell GPU & Windows DLLs
+```bash
+python audiobook.py "path/to/book.epub" -o "output/filename.mp3" -l es -c -v em_alex --whisper-modelo small
+```
 
-If you are using an **RTX 50-series (Blackwell)** card on Windows, you might encounter `OSError` or `WinError 126/127`. This is due to version conflicts between the system's CUDA and PyTorch's internal libraries.
+  - `-c`: Generate one file per chapter (Recommended for long books).
+  - `-v`: Voice selection (e.g., `em_alex`, `ef_dora`).
+  - `-l`: Language code (`es`, `en`, `fr`, etc.).
 
-The script includes a manual linkage for these specific paths:
+## 🔧 Troubleshooting: Blackwell GPU & Windows DLLs
 
-  * `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin`
-  * `C:\Program Files\NVIDIA\CUDNN\v9.20\bin\12.9\x64`
+If you are using an **RTX 50-series (Blackwell)** card on Windows, you might encounter `OSError` or `WinError 126/127`. This is caused by version conflicts between the system's CUDA and PyTorch's internal libraries.
 
-**If your installation paths differ, update the `rutas_gpu` list in `audiobook.py`.**
+To fix this, the script manually links the following paths:
 
------
+  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin`
+  - `C:\Program Files\NVIDIA\CUDNN\v9.20\bin\12.9\x64`
+
+**If your installation paths are different, update the `rutas_gpu` list inside `audiobook.py`.**
+
+````
+
+---
+
