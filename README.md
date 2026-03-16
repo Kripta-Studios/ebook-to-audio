@@ -48,6 +48,19 @@ python audiobook.py "path/to/book.epub" -o "output/filename.mp3" -l es -c -v em_
   - `-v`: Voice selection (e.g., `em_alex`, `ef_dora`).
   - `-l`: Language code (`es`, `en`, `fr`, etc.).
 
+## 📖 Usage Examples
+
+### Standard Book
+```bash
+python audiobook.py "book.epub" -o "output/book.mp3" -l es -v em_alex
+```
+
+### Large Books (e.g., The Brothers Karamazov)
+For massive books, use the `-c` flag to generate one file per chapter. This enables smart resuming if the process is interrupted.
+```bash
+python audiobook.py "Karamazov.epub" -o "Karamazov_Audio/Karamazov.mp3" -l es -c -v em_alex --whisper-modelo small
+```
+
 ## 🔧 Troubleshooting: Blackwell GPU & Windows DLLs
 
 If you are using an **RTX 50-series (Blackwell)** card on Windows, you might encounter `OSError` or `WinError 126/127`. This is caused by version conflicts between the system's CUDA and PyTorch's internal libraries.
@@ -58,4 +71,3 @@ To fix this, the script manually links the following paths:
   - `C:\Program Files\NVIDIA\CUDNN\v9.20\bin\12.9\x64`
 
 **If your installation paths are different, update the `rutas_gpu` list inside `audiobook.py`.**
-
