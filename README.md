@@ -60,6 +60,3 @@ To fix this, the script manually links the following paths:
 **If your installation paths are different, update the `rutas_gpu` list inside `audiobook.py`.**
 
 ````
-
----
-
