@@ -17,7 +17,7 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 ## 📦 Installation
 ```bash
 # Clone the repo
-git clone [https://github.com/YOUR_USERNAME/ebook-to-audio.git](https://github.com/YOUR_USERNAME/ebook-to-audio.git)
+git clone [https://github.com/Kripta-Studios/ebook-to-audio.git](https://github.com/Kripta-Studios/ebook-to-audio.git)
 cd ebook-to-audio
 
 # Create environment and install dependencies

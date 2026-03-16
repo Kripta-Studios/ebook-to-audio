@@ -128,14 +128,14 @@ def analizar_progreso(nombre_base, extension, total_caps, con_timestamps):
 
 def mostrar_resumen_progreso(completos, a_regenerar, pendientes, total_caps):
     print(f"\n{'─'*55}")
-    print(f"  Progreso detectado  ({len(completos)}/{total_caps} capítulos completos)")
+    print(f"  Progress found  ({len(completos)}/{total_caps} completed chapters)")
     print(f"{'─'*55}")
     if completos:
-        print(f"  ✓ Completos      : caps {_fmt_lista([i+1 for i in completos])}")
+        print(f"  ✓ Completed      : chapters {_fmt_lista([i+1 for i in completos])}")
     if a_regenerar:
-        print(f"  ⚠ Sin timestamps : caps {_fmt_lista([i+1 for i in a_regenerar])}  → solo Whisper")
+        print(f"  ⚠ Without timestamps : chapters {_fmt_lista([i+1 for i in a_regenerar])}  → only Whisper")
     if pendientes:
-        print(f"  ✗ Pendientes     : caps {_fmt_lista([i+1 for i in pendientes])}")
+        print(f"  ✗ Left     : chapters {_fmt_lista([i+1 for i in pendientes])}")
     print(f"{'─'*55}\n")
 
 
@@ -229,17 +229,17 @@ def inicializar_kokoro():
 
     providers = rt.get_available_providers()
     if "CUDAExecutionProvider" in providers:
-        print("Cargando Kokoro v1.0 (ONNX + CUDA)...")
+        print("Loading  Kokoro v1.0 (ONNX + CUDA)...")
         sess = rt.InferenceSession(
             "kokoro-v1.0.onnx",
             providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
         )
         modelo = Kokoro.from_session(sess, "voices-v1.0.bin")
     else:
-        print("Cargando Kokoro v1.0 (ONNX + CPU)...")
+        print("Loading Kokoro v1.0 (ONNX + CPU)...")
         modelo = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
 
-    print("✓ Kokoro cargado.")
+    print("✓ Kokoro loaded.")
     return modelo
 
 def inicializar_whisper():
@@ -252,25 +252,25 @@ def inicializar_whisper():
             _ = t @ t.transpose(-1, -2)
             device = "cuda"
         except Exception as e:
-            print(f"⚠ CUDA no disponible para Whisper ({e.__class__.__name__}), usando CPU.")
+            print(f"⚠ CUDA not available for Whisper ({e.__class__.__name__}), using CPU.")
             device = "cpu"
-    print(f"Cargando Whisper '{WHISPER_MODEL}' en {device}...")
+    print(f"Loading Whisper '{WHISPER_MODEL}' en {device}...")
     try:
         modelo = whisper.load_model(WHISPER_MODEL, device=device)
     except Exception as e:
-        print(f"⚠ Error cargando en {device} ({e}), usando CPU.")
+        print(f"⚠ Error loading in {device} ({e}), using CPU.")
         modelo = whisper.load_model(WHISPER_MODEL, device="cpu")
-    print("✓ Whisper cargado.")
+    print("✓ Whisper loaded.")
     return modelo
 
 def verificar_piper():
     try:
         result = subprocess.run(["piper", "--version"], capture_output=True, text=True)
-        print(f"✓ Piper encontrado: {result.stdout.strip()}")
+        print(f"✓ Piper found: {result.stdout.strip()}")
         return True
     except FileNotFoundError:
-        print("✗ 'piper' no encontrado en PATH.")
-        print("  Descárgalo desde: https://github.com/rhasspy/piper/releases")
+        print("✗ 'piper' not found in PATH.")
+        print("  Download from: https://github.com/rhasspy/piper/releases")
         return False
 
 
@@ -290,7 +290,7 @@ def generar_timestamps(whisper_model, audio_path, idioma):
     whisper_lang = lang_map.get(idioma, "es")
     fp16 = torch.cuda.is_available() and next(whisper_model.parameters()).is_cuda
     dispositivo = "GPU" if next(whisper_model.parameters()).is_cuda else "CPU"
-    print(f" -> Whisper ({dispositivo}): transcribiendo {os.path.basename(audio_path)}...")
+    print(f" -> Whisper ({dispositivo}): transcribing {os.path.basename(audio_path)}...")
 
     audio = AudioSegment.from_file(audio_path)
     duracion_ms = len(audio)
@@ -360,7 +360,7 @@ def generar_audio_kokoro(kokoro, whisper_model, texto, archivo_salida, idioma, v
     total  = len(chunks)
     lang_interno = KOKORO_LANG_CODE[idioma]
     espeak_lang  = KOKORO_ESPEAK_LANG[lang_interno]
-    print(f" -> Kokoro ONNX: {total} fragmentos | voz='{voz}' | lang='{espeak_lang}'...")
+    print(f" -> Kokoro ONNX: {total} frags | voice='{voz}' | lang='{espeak_lang}'...")
 
     muestras_totales = []
     t_inicio = time.time()
@@ -373,7 +373,7 @@ def generar_audio_kokoro(kokoro, whisper_model, texto, archivo_salida, idioma, v
             muestras, _ = kokoro.create(fragmento, voice=voz, speed=1.0, lang=espeak_lang)
             muestras_totales.append(muestras)
         except Exception as e:
-            print(f"\n[!] Error en fragmento {i+1}: {fragmento[:30]}... (Saltado)")
+            print(f"\n[!] Error in fragment {i+1}: {fragmento[:30]}... (Skipping)")
             continue
 
     print()
@@ -386,7 +386,7 @@ def generar_audio_kokoro(kokoro, whisper_model, texto, archivo_salida, idioma, v
     print(f" [OK] Audio: {archivo_salida}")
 
     if whisper_model is not None:
-        print(f" -> Whisper: generando timestamps...")
+        print(f" -> Whisper: generating timestamps...")
         palabras = generar_timestamps(whisper_model, archivo_salida, idioma)
         json_salida = os.path.splitext(archivo_salida)[0] + ".json"
         with open(json_salida, "w", encoding="utf-8") as f:
@@ -396,19 +396,19 @@ def generar_audio_kokoro(kokoro, whisper_model, texto, archivo_salida, idioma, v
                 "idioma":   idioma,
                 "palabras": palabras,
             }, f, ensure_ascii=False, indent=2)
-        print(f" [OK] Timestamps: {json_salida} ({len(palabras)} palabras)")
+        print(f" [OK] Timestamps: {json_salida} ({len(palabras)} words)")
         
         
 def generar_audio_piper(whisper_model, texto, archivo_salida, idioma):
     modelo_onnx, modelo_json = PIPER_MODELOS[idioma]
     if not os.path.exists(modelo_onnx):
-        print(f"\n✗ Modelo Piper no encontrado en: {modelo_onnx}")
+        print(f"\n✗ Model Piper not found in: {modelo_onnx}")
         sys.exit(1)
 
     chunks    = dividir_texto(texto)
     total     = len(chunks)
     segmentos = AudioSegment.empty()
-    print(f" -> Piper: {total} fragmentos para '{idioma}'...")
+    print(f" -> Piper: {total} fragments for '{idioma}'...")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         for i, fragmento in enumerate(chunks):
@@ -431,7 +431,7 @@ def generar_audio_piper(whisper_model, texto, archivo_salida, idioma):
     print(f" [OK] Audio: {archivo_salida}")
 
     if whisper_model is not None:
-        print(f" -> Whisper: generando timestamps...")
+        print(f" -> Whisper: generating timestamps...")
         palabras = generar_timestamps(whisper_model, archivo_salida, idioma)
         json_salida = os.path.splitext(archivo_salida)[0] + ".json"
         with open(json_salida, "w", encoding="utf-8") as f:
@@ -441,7 +441,7 @@ def generar_audio_piper(whisper_model, texto, archivo_salida, idioma):
                 "idioma":   idioma,
                 "palabras": palabras,
             }, f, ensure_ascii=False, indent=2)
-        print(f" [OK] Timestamps: {json_salida} ({len(palabras)} palabras)")
+        print(f" [OK] Timestamps: {json_salida} ({len(palabras)} words")
 
 
 def generar_audio(kokoro, whisper_model, texto, archivo_salida, idioma, voz):
@@ -450,7 +450,7 @@ def generar_audio(kokoro, whisper_model, texto, archivo_salida, idioma, voz):
     elif idioma in IDIOMAS_PIPER:
         generar_audio_piper(whisper_model, texto, archivo_salida, idioma)
     else:
-        print(f"Error: idioma '{idioma}' no soportado.")
+        print(f"Error: language '{idioma}' not supported.")
         sys.exit(1)
 
 
@@ -484,15 +484,18 @@ if __name__ == "__main__":
                         help="Muestra las voces disponibles para el idioma y termina.")
 
     args = parser.parse_args()
-
+    directorio_salida = os.path.dirname(args.salida)
+    if directorio_salida and not os.path.exists(directorio_salida):
+        os.makedirs(directorio_salida)
+        print(f"✓ Folder created: {directorio_salida}")
     if args.listar_voces:
         idioma = args.lenguaje
         if idioma in KOKORO_VOCES:
-            print(f"Voces Kokoro para '{idioma}':")
+            print(f"Kokoro voices for '{idioma}':")
             for v in KOKORO_VOCES[idioma]:
                 print(f"  - {v}")
         elif idioma in PIPER_MODELOS:
-            print(f"Motor Piper para '{idioma}'. Modelo: {PIPER_MODELOS[idioma][0]}")
+            print(f"Piper Engine for '{idioma}'. Model: {PIPER_MODELOS[idioma][0]}")
         sys.exit(0)
 
     archivo       = args.libro
@@ -502,13 +505,13 @@ if __name__ == "__main__":
     WHISPER_MODEL = args.whisper_modelo
 
     if not os.path.exists(archivo):
-        print(f"Error: No se encontró '{archivo}'.")
+        print(f"Error: not found '{archivo}'.")
         sys.exit(1)
 
     voz = args.voz
     if voz is None and idioma in KOKORO_VOCES:
         voz = KOKORO_VOCES[idioma][0]
-        print(f"Voz seleccionada automáticamente: {voz}")
+        print(f"Voice automatically selected: {voz}")
 
     # Cargar modelos
     
@@ -525,20 +528,20 @@ if __name__ == "__main__":
             sys.exit(1)
             
     # Extraer texto
-    print(f"\nExtrayendo estructura de: {archivo}...")
+    print(f"\nExtracting structure from: {archivo}...")
     if archivo.lower().endswith(".pdf"):
         capitulos_crudos = extraer_capitulos_pdf(archivo)
     elif archivo.lower().endswith(".epub"):
         capitulos_crudos = extraer_capitulos_epub(archivo)
     else:
-        print("Error: formato no soportado. Usa PDF o EPUB.")
+        print("Error: not supported format. Use PDF or EPUB (preferred).")
         sys.exit(1)
 
-    print(f"Se encontraron {len(capitulos_crudos)} bloques de texto/capítulos.")
+    print(f"Found {len(capitulos_crudos)} blocks of text/chapters.")
 
     # Generar audio
     if por_capitulos:
-        print("\nMODO: Un archivo por capítulo.")
+        print("\nMODE: un file per chapter.")
         nombre_base, extension = os.path.splitext(salida)
         con_timestamps = not args.sin_timestamps
 
@@ -553,10 +556,10 @@ if __name__ == "__main__":
         caps_a_procesar = sorted(a_regenerar + pendientes)
 
         if not caps_a_procesar:
-            print("✓ Todos los capítulos ya están completos. Nada que hacer.")
+            print("✓ Al chapterse completed. Finish.")
             sys.exit(0)
 
-        print(f"Procesando {len(caps_a_procesar)} capítulo(s) restante(s)...\n")
+        print(f"Processing {len(caps_a_procesar)} chapter(s) left(s)...\n")
 
         for i in caps_a_procesar:
             texto_limpio = limpiar_texto(capitulos_crudos[i])
@@ -565,12 +568,12 @@ if __name__ == "__main__":
             nombre_cap = f"{nombre_base}_cap_{i+1:02d}{extension}"
             json_cap   = f"{nombre_base}_cap_{i+1:02d}.json"
 
-            print(f"\n--- Capítulo {i+1}/{len(capitulos_crudos)}: {nombre_cap} ---")
+            print(f"\n--- Chapter {i+1}/{len(capitulos_crudos)}: {nombre_cap} ---")
 
             # Si el MP3 ya existe pero solo falta el JSON → saltar Kokoro
             mp3_existe = os.path.exists(nombre_cap) and os.path.getsize(nombre_cap) > 0
             if mp3_existe and i in a_regenerar and whisper_model is not None:
-                print(f"  MP3 ya existe, generando solo timestamps...")
+                print(f"  MP3 already exists, generating only timestamps...")
                 palabras = generar_timestamps(whisper_model, nombre_cap, idioma)
                 with open(json_cap, "w", encoding="utf-8") as f:
                     json.dump({
@@ -579,13 +582,13 @@ if __name__ == "__main__":
                         "idioma":   idioma,
                         "palabras": palabras,
                     }, f, ensure_ascii=False, indent=2)
-                print(f" [OK] Timestamps: {json_cap} ({len(palabras)} palabras)")
+                print(f" [OK] Timestamps: {json_cap} ({len(palabras)} words)")
             else:
                 generar_audio(kokoro, whisper_model, texto_limpio, nombre_cap, idioma, voz)
 
     else:
-        print("\nMODO: Libro completo en un solo archivo.")
+        print("\nMODE: Book completed in one single file.")
         texto_completo = limpiar_texto(" ".join(capitulos_crudos))
         generar_audio(kokoro, whisper_model, texto_completo, salida, idioma, voz)
 
-    print("\n¡Audiolibro generado con éxito!")
+    print("\nAudiobook created succesfully!")
