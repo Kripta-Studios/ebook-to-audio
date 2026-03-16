@@ -5,7 +5,7 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 ## 🚀 Features
 - **GPU Accelerated**: Fully optimized for NVIDIA RTX 5070 Ti (Blackwell) using CUDA 13.1 and cuDNN 9.
 - **Multilingual**: Supports ES, EN, FR, IT, PT, JA, ZH.
-- **Timestamp Generation**: Creates `.json` files with word-level timing for synchronized text-audio apps.
+- **Exact Timestamps**: Creates `.json` files with word-level timing derived directly from Kokoro's audio samples — no drift, no Whisper required.
 - **Smart Resuming**: Automatically detects finished chapters and resumes where it left off.
 
 ## 🛠 Prerequisites
@@ -35,18 +35,20 @@ Since the model files are large, they are not included in this repository. Pleas
 
 1.  **Kokoro v1.0**:
       - Download `kokoro-v1.0.onnx` and `voices-v1.0.bin` from [Hugging Face](https://www.google.com/search?q=https://huggingface.co/hexgrad/Kokoro-82M/tree/main/onnx).
-2.  **Whisper**:
-      - No manual download required. The script downloads the model (e.g., `small`) automatically on first use.
+2.  **Whisper** *(only required for German/Piper)*:
+      - No manual download required. The script downloads the model automatically on first use when processing a DE book.
 
 ## 📖 Usage
 
 ```bash
-python audiobook.py "path/to/book.epub" -o "output/filename.mp3" -l es -c -v em_alex --whisper-modelo small
+python audiobook.py "path/to/book.epub" -o "output/filename.mp3" -l es -c -v em_alex
 ```
 
   - `-c`: Generate one file per chapter (Recommended for long books).
   - `-v`: Voice selection (e.g., `em_alex`, `ef_dora`).
   - `-l`: Language code (`es`, `en`, `fr`, etc.).
+  - `--sin-timestamps`: Skip `.json` generation (faster, timestamps won't work in reader).
+  - `--whisper-modelo`: Whisper model size — **only relevant for German (`-l de`)** via Piper.
 
 ## 📖 Usage Examples
 
@@ -58,8 +60,32 @@ python audiobook.py "book.epub" -o "output/book.mp3" -l es -v em_alex
 ### Large Books (e.g., The Brothers Karamazov)
 For massive books, use the `-c` flag to generate one file per chapter. This enables smart resuming if the process is interrupted.
 ```bash
-python audiobook.py "Karamazov.epub" -o "Karamazov_Audio/Karamazov.mp3" -l es -c -v em_alex --whisper-modelo small
+python audiobook.py "Karamazov.epub" -o "Karamazov_Audio/Karamazov.mp3" -l es -c -v em_alex
 ```
+
+### 2\. Launch the Synchronized Reader
+
+The reader will automatically find the `.mp3` and `.json` files in the output directory.
+
+```bash
+# With audio directory specified via argument
+python reader.py "Karamazov.epub" --audio-dir "./Karamazov_Audio"
+
+# On Windows — equivalent shorthand (audio folder only, no book path)
+python .\reader.py --audio-dir .\Karamazov_Audio\
+```
+
+> **Tip:** When using `--audio-dir` without a book path, the reader will prompt you to open the EPUB/PDF via the **📂 Open book** button in the toolbar. You can also click **🎵 Open audio folder** to change the audio directory at any time from the UI.
+
+**Reader Shortcuts:**
+
+  - `Space`: Play/Pause.
+  - `Left/Right`: Seek 5 seconds.
+  - `Ctrl + O`: Open book dialog.
+  - `Ctrl + F`: Focus search bar.
+  - `Click on any word`: Jump audio to that specific word.
+
+
 
 ## 🔧 Troubleshooting: Blackwell GPU & Windows DLLs
 

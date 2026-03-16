@@ -1,11 +1,11 @@
 """
-reader.py — Lector de audiolibros con subrayado sincronizado
-Requiere: pip install PyQt6 PyMuPDF ebooklib beautifulsoup4
+reader.py — Audiobook reader with synchronized word highlighting
+Requires: pip install PyQt6 PyMuPDF ebooklib beautifulsoup4
 
-Uso:
-    python reader.py                        # abre diálogo para elegir archivo
-    python reader.py libro.epub             # abre directamente
-    python reader.py libro.epub --audio-dir ./audios   # carpeta con los MP3
+Usage:
+    python reader.py                        # opens dialog to choose a file
+    python reader.py book.epub              # opens directly
+    python reader.py book.epub --audio-dir ./audios   # folder with MP3s
 """
 
 import os
@@ -63,7 +63,7 @@ QSplitter::handle {{
     background: {BORDER};
     width: 2px;
 }}
-/* Panel lateral */
+/* Side panel */
 QListWidget {{
     background: {PANEL_BG};
     border: 1px solid {BORDER};
@@ -84,7 +84,7 @@ QListWidget::item:selected {{
 QListWidget::item:hover:!selected {{
     background: {BORDER};
 }}
-/* Área de texto */
+/* Text area */
 QTextEdit {{
     background: {PANEL_BG};
     border: 1px solid {BORDER};
@@ -95,7 +95,7 @@ QTextEdit {{
     color: {TEXT_PRIMARY};
     selection-background-color: {HIGHLIGHT_BG};
 }}
-/* Barra de herramientas */
+/* Toolbar */
 QToolBar {{
     background: {PANEL_BG};
     border-bottom: 1px solid {BORDER};
@@ -106,7 +106,7 @@ QToolBar QLabel {{
     color: {TEXT_SECONDARY};
     font-size: 12px;
 }}
-/* Botones */
+/* Buttons */
 QPushButton {{
     background: {PANEL_BG};
     border: 1px solid {BORDER};
@@ -138,7 +138,7 @@ QPushButton#play_btn {{
 QPushButton#play_btn:hover {{
     background: {ACCENT_HOVER};
 }}
-/* Slider de progreso */
+/* Progress slider */
 QSlider::groove:horizontal {{
     height: 4px;
     background: {BORDER};
@@ -159,7 +159,7 @@ QSlider::handle:horizontal {{
 QSlider::handle:horizontal:hover {{
     background: {ACCENT};
 }}
-/* Slider de velocidad */
+/* Speed slider */
 QSlider#speed_slider::groove:horizontal {{
     height: 3px;
     background: {BORDER};
@@ -177,7 +177,7 @@ QSlider#speed_slider::handle:horizontal {{
     margin: -4px 0;
     border-radius: 6px;
 }}
-/* Búsqueda */
+/* Search */
 QLineEdit {{
     background: {PANEL_BG};
     border: 1px solid {BORDER};
@@ -189,7 +189,7 @@ QLineEdit {{
 QLineEdit:focus {{
     border-color: {ACCENT};
 }}
-/* Barra de estado */
+/* Status bar */
 QStatusBar {{
     background: {PANEL_BG};
     border-top: 1px solid {BORDER};
@@ -217,7 +217,7 @@ QComboBox QAbstractItemView {{
     color: {TEXT_PRIMARY};
     selection-background-color: {ACCENT};
 }}
-/* Etiquetas de sección */
+/* Section labels */
 QLabel#section_label {{
     color: {TEXT_SECONDARY};
     font-size: 11px;
@@ -244,9 +244,9 @@ def extraer_capitulos_epub(ruta):
     for item in libro.get_items():
         if item.get_type() == ebooklib.ITEM_DOCUMENT:
             sopa = BeautifulSoup(item.get_content(), "html.parser")
-            # Título del capítulo
+            # Chapter title
             h = sopa.find(["h1", "h2", "h3"])
-            titulo = h.get_text(strip=True) if h else f"Capítulo {len(capitulos)+1}"
+            titulo = h.get_text(strip=True) if h else f"Chapter {len(capitulos)+1}"
             texto  = sopa.get_text(separator=" ")
             if len(texto.strip()) > 150:
                 capitulos.append({"titulo": titulo, "texto": texto.strip()})
@@ -260,14 +260,14 @@ def extraer_capitulos_pdf(ruta, paginas_por_parte=20):
         texto_actual += pagina.get_text("text") + "\n"
         if (i + 1) % paginas_por_parte == 0:
             capitulos.append({
-                "titulo": f"Páginas {i+2-paginas_por_parte}–{i+1}",
+                "titulo": f"Pages {i+2-paginas_por_parte}–{i+1}",
                 "texto":  texto_actual.strip()
             })
             texto_actual = ""
     if texto_actual.strip():
         n = len(capitulos) * paginas_por_parte
         capitulos.append({
-            "titulo": f"Páginas {n+1}–fin",
+            "titulo": f"Pages {n+1}–end",
             "texto":  texto_actual.strip()
         })
     return capitulos
@@ -278,9 +278,9 @@ def extraer_capitulos_pdf(ruta, paginas_por_parte=20):
 # ─────────────────────────────────────────────────────────────────────────────
 def encontrar_audio_para_capitulo(libro_path, cap_index, audio_dir=None):
     """
-    Busca el MP3 y JSON correspondiente a un capítulo.
-    Estrategia: busca archivos que contengan _cap_XX en el mismo directorio
-    que el libro o en audio_dir si se especifica.
+    Finds the MP3 and JSON file corresponding to a chapter.
+    Strategy: looks for files containing _cap_XX in the same directory
+    as the book, or in audio_dir if specified.
     """
     base_dir = audio_dir or os.path.dirname(libro_path)
     libro_nombre = Path(libro_path).stem
@@ -315,19 +315,19 @@ def encontrar_audio_libro_completo(libro_path, audio_dir=None):
 # WIDGET DE TEXTO CON SUBRAYADO
 # ─────────────────────────────────────────────────────────────────────────────
 class TextoLector(QTextEdit):
-    palabra_clickada = pyqtSignal(int)  # índice de la palabra en el JSON
+    palabra_clickada = pyqtSignal(int)  # index of the word in the JSON
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
-        self.palabras_json = []      # lista de {word, start, end}
+        self.palabras_json = []      # list of {word, start, end}
         self.indice_activo = -1
-        self.posiciones    = []      # [(start_pos, end_pos)] en el documento
+        self.posiciones    = []      # [(start_pos, end_pos)] in document
         self._texto_completo = ""
-        # Esto añade un margen interno (viewport margins) al documento
-        self.setViewportMargins(40, 0, 40, 0) # Izquierda, Arriba, Derecha, Abajo
+        # Add internal margin (viewport margins) to the document
+        self.setViewportMargins(40, 0, 40, 0)  # Left, Top, Right, Bottom
 
-        # Fuente de lectura cómoda
+        # Comfortable reading font
         font = QFont("Georgia", 17)
         font.setStyleHint(QFont.StyleHint.Serif)
         self.setFont(font)
@@ -343,8 +343,8 @@ class TextoLector(QTextEdit):
 
     def _calcular_posiciones(self):
         """
-        Mapea cada entrada del JSON de palabras a su posición en el QTextEdit.
-        Usa búsqueda secuencial para no equivocarse con palabras repetidas.
+        Maps each entry in the words JSON to its position in the QTextEdit.
+        Uses sequential search to avoid mismatches with repeated words.
         """
         self.posiciones = []
         texto = self._texto_completo
@@ -409,9 +409,9 @@ class TextoLector(QTextEdit):
                 # Aplicamos el formato antes de calcular el scroll
                 cur.setCharFormat(fmt)
 
-                # --- Lógica de Centrado ---
-                # Usamos un timer de 0ms para asegurar que Qt haya renderizado el cambio
-                # y el cálculo de la posición sea exacto.
+                # --- Centering logic ---
+                # Use a 0ms timer to ensure Qt has rendered the change
+                # and the position calculation is accurate.
                 rect = self.cursorRect(cur)
                 scrollbar = self.verticalScrollBar()
                 viewport_height = self.viewport().height()
@@ -493,7 +493,7 @@ class ReaderWindow(QMainWindow):
 
     # ── UI ───────────────────────────────────────────────────────────────────
     def _setup_ui(self):
-        self.setWindowTitle("Lector de Audiolibros")
+        self.setWindowTitle("Audiobook Reader")
         self.setMinimumSize(900, 600)
         self.resize(1400, 850)
 
@@ -503,28 +503,28 @@ class ReaderWindow(QMainWindow):
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
 
-        # ── Barra superior ────────────────────────────────────────────────
+        # ── Top toolbar ───────────────────────────────────────────────────
         self._setup_toolbar()
 
-        # ── Splitter principal ────────────────────────────────────────────
+        # ── Main splitter ─────────────────────────────────────────────────
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setChildrenCollapsible(False)
         root_layout.addWidget(splitter)
 
-        # Panel izquierdo: índice + búsqueda
+        # Left panel: index + search
         left = QWidget()
         left.setFixedWidth(260)
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(12, 12, 8, 12)
         left_layout.setSpacing(8)
 
-        lbl_buscar = QLabel("BUSCAR")
+        lbl_buscar = QLabel("SEARCH")
         lbl_buscar.setObjectName("section_label")
         left_layout.addWidget(lbl_buscar)
 
         buscar_row = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Buscar en el texto...")
+        self.search_input.setPlaceholderText("Search in text...")
         self.search_input.returnPressed.connect(self._buscar)
         buscar_row.addWidget(self.search_input)
         btn_buscar = QPushButton("↵")
@@ -537,7 +537,7 @@ class ReaderWindow(QMainWindow):
         self.search_count_label.setObjectName("section_label")
         left_layout.addWidget(self.search_count_label)
 
-        lbl_indice = QLabel("ÍNDICE")
+        lbl_indice = QLabel("TABLE OF CONTENTS")
         lbl_indice.setObjectName("section_label")
         left_layout.addWidget(lbl_indice)
 
@@ -547,7 +547,7 @@ class ReaderWindow(QMainWindow):
 
         splitter.addWidget(left)
 
-        # Panel derecho: texto
+        # Right panel: text
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(8, 12, 12, 0)
@@ -560,13 +560,13 @@ class ReaderWindow(QMainWindow):
         splitter.addWidget(right)
         splitter.setSizes([260, 1140])
 
-        # ── Panel de reproducción ─────────────────────────────────────────
+        # ── Playback panel ────────────────────────────────────────────────
         self._setup_player_panel(root_layout)
 
-        # ── Barra de estado ───────────────────────────────────────────────
+        # ── Status bar ────────────────────────────────────────────────────
         self.status = QStatusBar()
         self.setStatusBar(self.status)
-        self.status.showMessage("Abre un libro para comenzar  ·  Ctrl+O")
+        self.status.showMessage("Open a book to get started  ·  Ctrl+O")
 
     def _setup_toolbar(self):
         tb = QToolBar()
@@ -574,13 +574,17 @@ class ReaderWindow(QMainWindow):
         tb.setIconSize(QSize(20, 20))
         self.addToolBar(tb)
 
-        btn_open = QPushButton("📂  Abrir libro")
+        btn_open = QPushButton("📂  Open book")
         btn_open.clicked.connect(self._dialogo_abrir)
         tb.addWidget(btn_open)
 
+        btn_audio_dir = QPushButton("🎵  Open audio folder")
+        btn_audio_dir.clicked.connect(self._dialogo_audio_dir)
+        tb.addWidget(btn_audio_dir)
+
         tb.addSeparator()
 
-        tb.addWidget(QLabel("  Tamaño fuente:"))
+        tb.addWidget(QLabel("  Font size:"))
         self.font_size = QSpinBox()
         self.font_size.setRange(10, 36)
         self.font_size.setValue(17)
@@ -589,8 +593,8 @@ class ReaderWindow(QMainWindow):
 
         tb.addSeparator()
 
-        # Selector de fuente
-        tb.addWidget(QLabel("  Fuente:"))
+        # Font selector
+        tb.addWidget(QLabel("  Font:"))
         self.font_combo = QComboBox()
         self.font_combo.addItems(["Georgia", "Times New Roman", "Segoe UI",
                                    "Consolas", "Calibri", "Palatino Linotype"])
@@ -599,16 +603,16 @@ class ReaderWindow(QMainWindow):
 
         tb.addSeparator()
 
-        # Modo noche / día
-        self.btn_tema = QPushButton("☀️  Día")
+        # Night / day mode
+        self.btn_tema = QPushButton("☀️  Day")
         self.btn_tema.clicked.connect(self._toggle_tema)
         self._modo_oscuro = True
         tb.addWidget(self.btn_tema)
 
         tb.addSeparator()
 
-        # Reproducción continua
-        self.btn_continua = QPushButton("🔁  Continua: ON")
+        # Continuous playback
+        self.btn_continua = QPushButton("🔁  Auto-play: ON")
         self.btn_continua.setCheckable(True)
         self.btn_continua.setChecked(True)
         self.btn_continua.clicked.connect(self._toggle_continua)
@@ -616,7 +620,7 @@ class ReaderWindow(QMainWindow):
             f"QPushButton:checked {{ background: #2a4a2a; border-color: #4caf50; color: #4caf50; }}"
         )
         tb.addWidget(self.btn_continua)
-        
+
         self.btn_sync = QPushButton("🎯  Sync: ON")
         self.btn_sync.setCheckable(True)
         self.btn_sync.setChecked(True)
@@ -634,7 +638,7 @@ class ReaderWindow(QMainWindow):
         layout.setContentsMargins(20, 8, 20, 8)
         layout.setSpacing(6)
 
-        # Barra de progreso
+        # Progress bar
         progress_row = QHBoxLayout()
         self.time_label = QLabel("0:00")
         self.time_label.setObjectName("time_label")
@@ -653,7 +657,7 @@ class ReaderWindow(QMainWindow):
         progress_row.addWidget(self.time_total_label)
         layout.addLayout(progress_row)
 
-        # Controles
+        # Controls
         controls_row = QHBoxLayout()
         controls_row.setSpacing(12)
 
@@ -677,8 +681,8 @@ class ReaderWindow(QMainWindow):
 
         controls_row.addStretch()
 
-        # Velocidad
-        controls_row.addWidget(QLabel("Velocidad:"))
+        # Speed
+        controls_row.addWidget(QLabel("Speed:"))
         self.speed_slider = QSlider(Qt.Orientation.Horizontal)
         self.speed_slider.setObjectName("speed_slider")
         self.speed_slider.setRange(50, 300)  # 0.5x – 2.0x
@@ -694,7 +698,7 @@ class ReaderWindow(QMainWindow):
 
         controls_row.addStretch()
 
-        # Volumen
+        # Volume
         controls_row.addWidget(QLabel("Vol:"))
         self.vol_slider = QSlider(Qt.Orientation.Horizontal)
         self.vol_slider.setRange(0, 100)
@@ -703,14 +707,14 @@ class ReaderWindow(QMainWindow):
         self.vol_slider.valueChanged.connect(self._cambiar_volumen)
         controls_row.addWidget(self.vol_slider)
 
-        # Capítulo anterior / siguiente
+        # Previous / next chapter
         controls_row.addStretch()
-        btn_prev_cap = QPushButton("◀ Cap")
+        btn_prev_cap = QPushButton("◀ Ch")
         btn_prev_cap.setFixedWidth(70)
         btn_prev_cap.clicked.connect(self._cap_anterior)
         controls_row.addWidget(btn_prev_cap)
 
-        btn_next_cap = QPushButton("Cap ▶")
+        btn_next_cap = QPushButton("Ch ▶")
         btn_next_cap.setFixedWidth(70)
         btn_next_cap.clicked.connect(self._cap_siguiente)
         controls_row.addWidget(btn_next_cap)
@@ -737,14 +741,26 @@ class ReaderWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+Up"),   self, self._cap_anterior)
         QShortcut(QKeySequence("Ctrl+Down"), self, self._cap_siguiente)
 
-    # ── Apertura de libro ─────────────────────────────────────────────────
+    # ── Book opening ──────────────────────────────────────────────────────
     def _dialogo_abrir(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Abrir libro", "",
-            "Libros (*.epub *.pdf);;EPUB (*.epub);;PDF (*.pdf)"
+            self, "Open book", "",
+            "Books (*.epub *.pdf);;EPUB (*.epub);;PDF (*.pdf)"
         )
         if path:
             self._abrir_libro(path)
+
+    def _dialogo_audio_dir(self):
+        """Open a folder picker to set the audio directory at runtime."""
+        folder = QFileDialog.getExistingDirectory(
+            self, "Select audio folder", self.audio_dir or ""
+        )
+        if folder:
+            self.audio_dir = folder
+            self.status.showMessage(f"Audio folder: {folder}")
+            # Reload current chapter to pick up the new audio path
+            if self.cap_actual >= 0:
+                self._cambiar_capitulo(self.cap_actual)
 
     def _abrir_libro(self, path):
         self.libro_path = path
@@ -757,13 +773,13 @@ class ReaderWindow(QMainWindow):
             elif path.lower().endswith(".pdf"):
                 self.capitulos = extraer_capitulos_pdf(path)
             else:
-                QMessageBox.warning(self, "Error", "Formato no soportado.")
+                QMessageBox.warning(self, "Error", "Unsupported format.")
                 return
         except Exception as e:
-            QMessageBox.critical(self, "Error al abrir", str(e))
+            QMessageBox.critical(self, "Error opening file", str(e))
             return
 
-        # Poblar índice
+        # Populate index
         self.lista_capitulos.blockSignals(True)
         self.lista_capitulos.clear()
         for i, cap in enumerate(self.capitulos):
@@ -772,8 +788,8 @@ class ReaderWindow(QMainWindow):
         self.lista_capitulos.blockSignals(False)
 
         nombre = Path(path).name
-        self.setWindowTitle(f"Lector — {nombre}")
-        self.status.showMessage(f"Libro cargado: {nombre}  ·  {len(self.capitulos)} capítulos")
+        self.setWindowTitle(f"Reader — {nombre}")
+        self.status.showMessage(f"Book loaded: {nombre}  ·  {len(self.capitulos)} chapters")
 
         # Ir al primer capítulo
         self.lista_capitulos.setCurrentRow(0)
@@ -815,18 +831,18 @@ class ReaderWindow(QMainWindow):
         # Cargar audio
         if audio_path:
             self.player.setSource(QUrl.fromLocalFile(audio_path))
-            estado = "▶ Listo"
+            estado = "▶ Ready"
             self.status.showMessage(
-                f"Capítulo {row+1}: {cap['titulo']}  ·  Audio: {Path(audio_path).name}"
-                + (f"  ·  {len(palabras)} timestamps" if palabras else "  ·  Sin timestamps")
+                f"Chapter {row+1}: {cap['titulo']}  ·  Audio: {Path(audio_path).name}"
+                + (f"  ·  {len(palabras)} timestamps" if palabras else "  ·  No timestamps")
             )
         else:
             self.player.setSource(QUrl())
             self.status.showMessage(
-                f"Capítulo {row+1}: {cap['titulo']}  ·  Sin audio encontrado"
+                f"Chapter {row+1}: {cap['titulo']}  ·  No audio found"
             )
 
-    # ── Reproducción ──────────────────────────────────────────────────────
+    # ── Playback ──────────────────────────────────────────────────────
     def _toggle_play(self):
         state = self.player.playbackState()
         if state == QMediaPlayer.PlaybackState.PlayingState:
@@ -855,17 +871,17 @@ class ReaderWindow(QMainWindow):
                     # Pequeña pausa de 800ms antes de arrancar el siguiente cap
                     QTimer.singleShot(800, lambda: self._avanzar_capitulo(siguiente))
                 else:
-                    self.status.showMessage("✓ Fin del libro.")
+                    self.status.showMessage("✓ End of book.")
 
     def _avanzar_capitulo(self, row):
-        """Cambia al capítulo indicado y arranca la reproducción."""
+        """Switches to the given chapter and starts playback."""
         self.lista_capitulos.setCurrentRow(row)
-        # _cambiar_capitulo ya se llama por la señal currentRowChanged,
-        # pero el player necesita un tick para cargar la fuente antes de play()
+        # _cambiar_capitulo is already called via the currentRowChanged signal,
+        # but the player needs one tick to load the source before play()
         QTimer.singleShot(200, self._autoplay)
 
     def _autoplay(self):
-        """Inicia la reproducción si hay audio cargado."""
+        """Starts playback if audio is loaded."""
         if self.player.source().isValid():
             self.player.play()
             if self.palabras_json:
@@ -910,7 +926,7 @@ class ReaderWindow(QMainWindow):
     def _cambiar_volumen(self, val):
         self.audio_out.setVolume(val / 100.0)
 
-    # ── Subrayado sincronizado ────────────────────────────────────────────
+    # ── Synchronized highlighting ─────────────────────────────────────────
     def _actualizar_highlight(self):
         # Si el botón de sync está desactivado, no hacemos nada
         if not self.btn_sync.isChecked():
@@ -924,7 +940,7 @@ class ReaderWindow(QMainWindow):
     def _actualizar_indice_por_tiempo(self, t_secs):
         if not self.palabras_json:
             return
-        # Búsqueda binaria del índice de palabra actual
+        # Binary search for the current word index
         lo, hi = 0, len(self.palabras_json) - 1
         idx = 0
         while lo <= hi:
@@ -943,7 +959,7 @@ class ReaderWindow(QMainWindow):
         self.texto.resaltar_palabra(idx)
 
     def _saltar_a_palabra(self, indice):
-        """El usuario clickó una palabra — saltar a ese punto del audio."""
+        """User clicked a word — jump to that point in the audio."""
         if indice < len(self.palabras_json):
             t_ms = int(self.palabras_json[indice]["start"] * 1000)
             self.player.setPosition(t_ms)
@@ -953,7 +969,7 @@ class ReaderWindow(QMainWindow):
                 self.player.play()
                 self._timer_highlight.start()
 
-    # ── Navegación de capítulos ───────────────────────────────────────────
+    # ── Chapter navigation ────────────────────────────────────────────────
     def _cap_anterior(self):
         row = self.lista_capitulos.currentRow()
         if row > 0:
@@ -964,7 +980,7 @@ class ReaderWindow(QMainWindow):
         if row < self.lista_capitulos.count() - 1:
             self.lista_capitulos.setCurrentRow(row + 1)
 
-    # ── Búsqueda ──────────────────────────────────────────────────────────
+    # ── Search ────────────────────────────────────────────────────────
     def _buscar(self):
         query = self.search_input.text().strip()
         if not query:
@@ -973,24 +989,24 @@ class ReaderWindow(QMainWindow):
             return
         count = self.texto.buscar_texto(query)
         if count > 0:
-            self.search_count_label.setText(f"{count} coincidencia(s)")
+            self.search_count_label.setText(f"{count} match(es)")
         else:
-            self.search_count_label.setText("Sin resultados")
+            self.search_count_label.setText("No results")
 
     def _focus_buscar(self):
         self.search_input.setFocus()
         self.search_input.selectAll()
 
-    # ── Apariencia ────────────────────────────────────────────────────────
+    # ── Appearance ────────────────────────────────────────────────────
     def _toggle_sync(self, checked):
         if checked:
             self.btn_sync.setText("🎯  Sync: ON")
             if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
                 self._timer_highlight.start()
         else:
-            self.btn_sync.setText("🔓  Libre")
-            self.texto.quitar_resaltado() # Limpia el subrayado al desactivar
-            
+            self.btn_sync.setText("🔓  Free scroll")
+            self.texto.quitar_resaltado()
+
     def _cambiar_fuente(self):
         familia = self.font_combo.currentText()
         tamaño  = self.font_size.value()
@@ -1000,26 +1016,26 @@ class ReaderWindow(QMainWindow):
     def _toggle_continua(self, checked):
         self._reproduccion_continua = checked
         if checked:
-            self.btn_continua.setText("🔁  Continua: ON")
+            self.btn_continua.setText("🔁  Auto-play: ON")
         else:
-            self.btn_continua.setText("⏹  Continua: OFF")
+            self.btn_continua.setText("⏹  Auto-play: OFF")
 
     def _toggle_tema(self):
         if self._modo_oscuro:
-            # Modo día
+            # Day mode
             self.texto.setStyleSheet(
                 f"background: #faf8f2; color: #1a1a2e; "
                 f"border: 1px solid #ddd; border-radius: 8px; "
                 f"padding: 24px 32px; font-size: 17px;"
             )
-            self.btn_tema.setText("🌙  Noche")
+            self.btn_tema.setText("🌙  Night")
             self._modo_oscuro = False
         else:
             self.texto.setStyleSheet("")
-            self.btn_tema.setText("☀️  Día")
+            self.btn_tema.setText("☀️  Day")
             self._modo_oscuro = True
 
-    # ── Utilidades ────────────────────────────────────────────────────────
+    # ── Utilities ─────────────────────────────────────────────────────
     @staticmethod
     def _fmt_tiempo(ms):
         s = ms // 1000
@@ -1035,15 +1051,15 @@ class ReaderWindow(QMainWindow):
 # ─────────────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
-        description="Lector de audiolibros con subrayado sincronizado"
+        description="Audiobook reader with synchronized word highlighting"
     )
-    parser.add_argument("libro", nargs="?", help="Ruta al PDF o EPUB")
+    parser.add_argument("libro", nargs="?", help="Path to PDF or EPUB")
     parser.add_argument("--audio-dir", default=None,
-                        help="Carpeta donde buscar los MP3 (por defecto: misma carpeta del libro)")
+                        help="Folder to search for MP3s (default: same folder as the book)")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Lector Audiolibros")
+    app.setApplicationName("Audiobook Reader")
     app.setStyleSheet(STYLESHEET)
 
     window = ReaderWindow(
