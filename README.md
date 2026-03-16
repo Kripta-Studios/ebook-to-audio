@@ -1,6 +1,3 @@
-Aquí tienes la versión final y unificada de tu **README.md** en inglés, lista para copiar y pegar. He organizado las secciones para que sigan un flujo lógico de instalación y uso.
-
-````markdown
 # Ebook-to-Audiobook with GPU Acceleration (RTX 50-series)
 
 Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** for TTS and **OpenAI Whisper** for word-level timestamps.
