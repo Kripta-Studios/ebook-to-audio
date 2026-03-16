@@ -17,7 +17,7 @@ Convert EPUB and PDF files into high-quality audiobooks using **Kokoro v1.0** fo
 ## 📦 Installation
 ```bash
 # Clone the repo
-git clone [https://github.com/Kripta-Studios/ebook-to-audio.git](https://github.com/Kripta-Studios/ebook-to-audio.git)
+git clone https://github.com/Kripta-Studios/ebook-to-audio.git
 cd ebook-to-audio
 
 # Create environment and install dependencies
@@ -25,7 +25,7 @@ uv venv --python 3.12
 # On Windows:
 .venv\Scripts\activate
 # Install Torch with CUDA 12.8 support (compatible with RTX 50-series)
-uv pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu128](https://download.pytorch.org/whl/cu128)
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 uv pip install -r requirements.txt
 ````
 
